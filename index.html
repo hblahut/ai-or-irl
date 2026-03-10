@@ -36,7 +36,8 @@ font-size:18px;
 #card{
 position:relative;
 touch-action:none;
-transition:transform .25s ease;
+transition:transform .3s ease, opacity .3s ease;
+opacity:0;
 }
 
 video,img{
@@ -133,6 +134,29 @@ font-size:18px;
 line-height:1.6;
 }
 
+.swipe-indicator{
+
+position:absolute;
+top:20px;
+left:0;
+right:0;
+
+font-size:28px;
+font-weight:bold;
+
+opacity:0;
+transition:opacity .2s;
+
+}
+
+.swipe-ai{
+color:#ff4d4d;
+}
+
+.swipe-real{
+color:#2ecc71;
+}
+
 </style>
 
 </head>
@@ -144,8 +168,8 @@ line-height:1.6;
 <h1>AI or IRL</h1>
 
 <div class="instructions">
-Swipe <b>LEFT</b> if you think the media is AI.<br><br>
-Swipe <b>RIGHT</b> if you think it is real.
+Swipe <b>LEFT</b> if you think it's AI.<br><br>
+Swipe <b>RIGHT</b> if you think it's real.
 </div>
 
 <button class="start-button" onclick="startGame()">Start Game</button>
@@ -165,6 +189,9 @@ Level: <span id="level">1</span>
 
 <div id="card">
 
+<div id="swipeAI" class="swipe-indicator swipe-ai">AI</div>
+<div id="swipeREAL" class="swipe-indicator swipe-real">REAL</div>
+
 <div id="media">Loading...</div>
 
 <div id="overlay" class="overlay hidden">
@@ -181,13 +208,8 @@ Level: <span id="level">1</span>
 
 <div class="buttons" id="buttons">
 
-<button class="ai" onclick="guess('ai')">
-⬅ AI
-</button>
-
-<button class="irl" onclick="guess('real')">
-IRL ➡
-</button>
+<button class="ai" onclick="guess('ai')">⬅ AI</button>
+<button class="irl" onclick="guess('real')">IRL ➡</button>
 
 </div>
 
@@ -260,6 +282,8 @@ let img=new Image()
 img.onload=()=>{
 document.getElementById("media").innerHTML=""
 document.getElementById("media").appendChild(img)
+
+document.getElementById("card").style.opacity=1
 }
 
 img.src=currentMedia.url+"&"+Math.random()
@@ -272,6 +296,8 @@ document.getElementById("media").innerHTML=
 `<video autoplay muted loop playsinline>
 <source src="${currentMedia.url}" type="video/mp4">
 </video>`
+
+document.getElementById("card").style.opacity=1
 
 }
 
@@ -315,6 +341,7 @@ function nextRound(){
 document.getElementById("overlay").classList.add("hidden")
 
 document.getElementById("card").style.transform="translateX(0)"
+document.getElementById("card").style.opacity=0
 
 pickMedia()
 
@@ -357,11 +384,27 @@ currentX=e.touches[0].clientX-startX
 
 card.style.transform=`translateX(${currentX}px)`
 
+if(currentX>40){
+
+document.getElementById("swipeREAL").style.opacity=1
+document.getElementById("swipeAI").style.opacity=0
+
+}
+else if(currentX<-40){
+
+document.getElementById("swipeAI").style.opacity=1
+document.getElementById("swipeREAL").style.opacity=0
+
+}
+
 })
 
 card.addEventListener("touchend",()=>{
 
 dragging=false
+
+document.getElementById("swipeAI").style.opacity=0
+document.getElementById("swipeREAL").style.opacity=0
 
 if(currentX>120){
 
@@ -369,14 +412,12 @@ card.style.transform="translateX(600px)"
 guess("real")
 
 }
-
 else if(currentX<-120){
 
 card.style.transform="translateX(-600px)"
 guess("ai")
 
 }
-
 else{
 
 card.style.transform="translateX(0)"
