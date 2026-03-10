@@ -26,7 +26,7 @@ position:relative;
 transition:transform .25s ease;
 }
 
-video,img{
+img{
 width:100%;
 border-radius:12px;
 margin-top:20px;
@@ -83,7 +83,7 @@ Score: <span id="score">0</span><br>
 
 <div id="card">
 
-<div id="media"></div>
+<img id="image">
 
 <div id="overlay" class="overlay hidden">
 
@@ -117,63 +117,51 @@ let dragging=false
 
 const card=document.getElementById("card")
 
-/* MEDIA DATA */
+/* IMAGE DATA */
 
-const media=[
+const aiImages=[
+"https://thispersondoesnotexist.com/?1",
+"https://thispersondoesnotexist.com/?2",
+"https://thispersondoesnotexist.com/?3",
+"https://thispersondoesnotexist.com/?4"
+]
 
-{type:"image",url:"https://thispersondoesnotexist.com/?1",answer:"ai"},
-{type:"image",url:"https://thispersondoesnotexist.com/?2",answer:"ai"},
-
-{type:"image",url:"https://picsum.photos/400?1",answer:"real"},
-{type:"image",url:"https://picsum.photos/400?2",answer:"real"},
-
-{type:"video",url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",answer:"real"},
-{type:"video",url:"https://www.w3schools.com/html/mov_bbb.mp4",answer:"ai"}
-
+const realImages=[
+"https://picsum.photos/400?1",
+"https://picsum.photos/400?2",
+"https://picsum.photos/400?3",
+"https://picsum.photos/400?4"
 ]
 
 function newRound(){
 
 locked=false
 
-let item=media[Math.floor(Math.random()*media.length)]
+let isAI=Math.random()<0.5
 
-currentAnswer=item.answer
+if(isAI){
 
-renderMedia(item)
-
-}
-
-function renderMedia(item){
-
-let mediaDiv=document.getElementById("media")
-
-mediaDiv.innerHTML=""
-
-if(item.type==="image"){
-
-let img=document.createElement("img")
-img.src=item.url+"&"+Math.random()
-
-mediaDiv.appendChild(img)
+currentAnswer="ai"
+setImage(aiImages[Math.floor(Math.random()*aiImages.length)])
 
 }else{
 
-let video=document.createElement("video")
-
-video.autoplay=true
-video.loop=true
-video.muted=true
-video.playsInline=true
-
-let source=document.createElement("source")
-source.src=item.url
-source.type="video/mp4"
-
-video.appendChild(source)
-mediaDiv.appendChild(video)
+currentAnswer="real"
+setImage(realImages[Math.floor(Math.random()*realImages.length)])
 
 }
+
+}
+
+function setImage(url){
+
+const img=document.getElementById("image")
+
+img.src="" 
+
+setTimeout(()=>{
+img.src=url+"&"+Math.random()
+},50)
 
 }
 
@@ -189,8 +177,6 @@ if(answer===correct){
 score++
 streak++
 
-document.getElementById("result").innerText=`Correct — ${correct.toUpperCase()}!`
-
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
@@ -202,7 +188,7 @@ streak=0
 
 document.getElementById("result").innerText=`Incorrect — ${correct.toUpperCase()}!`
 
-/* SHOW TIP ONLY IF AI WAS GUESSED AS REAL */
+/* TIP ONLY WHEN AI GUESSED AS REAL */
 
 if(correct==="ai" && answer==="real"){
 generateTip()
@@ -230,10 +216,10 @@ newRound()
 function generateTip(){
 
 const tips=[
-"AI often struggles with teeth and earrings.",
 "Look for strange symmetry in faces.",
-"Background objects may warp unnaturally.",
-"Lighting may look inconsistent."
+"AI often struggles with teeth and earrings.",
+"Hair strands may blend into the background.",
+"Earrings or glasses may be mismatched."
 ]
 
 document.getElementById("tip").innerText=
@@ -241,7 +227,7 @@ tips[Math.floor(Math.random()*tips.length)]
 
 }
 
-/* SWIPE LOGIC */
+/* SWIPE */
 
 card.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX
