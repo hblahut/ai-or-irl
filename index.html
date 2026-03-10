@@ -83,7 +83,7 @@ Score: <span id="score">0</span><br>
 
 <div id="card">
 
-<img id="image">
+<div id="media"></div>
 
 <div id="overlay" class="overlay hidden">
 
@@ -137,31 +137,35 @@ function newRound(){
 
 locked=false
 
+card.style.transform="translateX(0)"
+
 let isAI=Math.random()<0.5
 
+let url
+
 if(isAI){
-
 currentAnswer="ai"
-setImage(aiImages[Math.floor(Math.random()*aiImages.length)])
-
+url=aiImages[Math.floor(Math.random()*aiImages.length)]
 }else{
-
 currentAnswer="real"
-setImage(realImages[Math.floor(Math.random()*realImages.length)])
+url=realImages[Math.floor(Math.random()*realImages.length)]
+}
+
+renderImage(url)
 
 }
 
-}
+function renderImage(url){
 
-function setImage(url){
+const media=document.getElementById("media")
 
-const img=document.getElementById("image")
+media.innerHTML=""
 
-img.src="" 
+const img=document.createElement("img")
 
-setTimeout(()=>{
-img.src=url+"&"+Math.random()
-},50)
+img.src=url+"?"+Math.random()
+
+media.appendChild(img)
 
 }
 
@@ -180,15 +184,13 @@ streak++
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
-setTimeout(newRound,900)
+setTimeout(newRound,700)
 
 }else{
 
 streak=0
 
 document.getElementById("result").innerText=`Incorrect — ${correct.toUpperCase()}!`
-
-/* TIP ONLY WHEN AI GUESSED AS REAL */
 
 if(correct==="ai" && answer==="real"){
 generateTip()
