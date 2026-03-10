@@ -107,10 +107,30 @@ font-size:16px;
 display:none;
 }
 
-.swipe-hint{
-margin-top:8px;
-color:#777;
-font-size:14px;
+.start-screen{
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+height:100vh;
+padding:40px;
+}
+
+.start-button{
+margin-top:30px;
+padding:16px 24px;
+font-size:18px;
+border:none;
+border-radius:10px;
+background:#333;
+color:white;
+cursor:pointer;
+}
+
+.instructions{
+margin-top:20px;
+font-size:18px;
+line-height:1.6;
 }
 
 </style>
@@ -119,7 +139,21 @@ font-size:14px;
 
 <body>
 
-<div class="container">
+<div id="startScreen" class="start-screen">
+
+<h1>AI or IRL</h1>
+
+<div class="instructions">
+Swipe <b>LEFT</b> if you think the media is AI.<br><br>
+Swipe <b>RIGHT</b> if you think it is real.
+</div>
+
+<button class="start-button" onclick="startGame()">Start Game</button>
+
+</div>
+
+
+<div id="game" class="container hidden">
 
 <h1>AI or IRL</h1>
 
@@ -143,10 +177,6 @@ Level: <span id="level">1</span>
 
 </div>
 
-</div>
-
-<div class="swipe-hint">
-Swipe on mobile • Click on desktop
 </div>
 
 <div class="buttons" id="buttons">
@@ -178,6 +208,15 @@ let isMobile = window.innerWidth < 768
 
 if(isMobile){
 document.getElementById("buttons").style.display="none"
+}
+
+function startGame(){
+
+document.getElementById("startScreen").style.display="none"
+document.getElementById("game").classList.remove("hidden")
+
+pickMedia()
+
 }
 
 let media=[
@@ -349,8 +388,6 @@ currentX=0
 })
 
 }
-
-pickMedia()
 
 </script>
 
