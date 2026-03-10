@@ -10,11 +10,12 @@
 <style>
 
 body{
-font-family: Arial;
+font-family:Arial;
 background:#f4f4f4;
 text-align:center;
 margin:0;
 padding:0;
+overflow-x:hidden;
 }
 
 .container{
@@ -25,6 +26,23 @@ padding:20px;
 
 h1{
 margin-top:10px;
+}
+
+.score{
+margin-top:10px;
+font-size:18px;
+}
+
+#card{
+position:relative;
+touch-action:none;
+transition:transform .25s ease;
+}
+
+video,img{
+width:100%;
+border-radius:12px;
+margin-top:20px;
 }
 
 .buttons{
@@ -59,27 +77,15 @@ margin-top:15px;
 width:100%;
 }
 
-#result{
-font-size:20px;
-margin-top:15px;
-font-weight:bold;
-}
-
 .tip{
 margin-top:10px;
-font-size:15px;
 color:#444;
 }
 
-.score{
-margin-top:10px;
-font-size:18px;
-}
-
-video,img{
-width:100%;
-border-radius:12px;
-margin-top:20px;
+.swipe-hint{
+margin-top:8px;
+color:#777;
+font-size:14px;
 }
 
 </style>
@@ -98,18 +104,17 @@ Score: <span id="score">0</span><br>
 Level: <span id="level">1</span>
 </div>
 
-<div id="media"></div>
+<div id="card">
+<div id="media">Loading...</div>
+</div>
+
+<div class="swipe-hint">
+← Swipe or Click →
+</div>
 
 <div class="buttons">
-
-<button class="ai" onclick="guess('ai')" id="aiBtn">
-⬅ AI
-</button>
-
-<button class="irl" onclick="guess('real')" id="irlBtn">
-IRL ➡
-</button>
-
+<button class="ai" onclick="guess('ai')">⬅ AI</button>
+<button class="irl" onclick="guess('real')">IRL ➡</button>
 </div>
 
 <p id="result"></p>
@@ -123,65 +128,42 @@ Next →
 
 <script>
 
-let score = 0
-let streak = 0
-let level = 1
+let score=0
+let streak=0
+let level=1
+let currentMedia=null
 
-let currentMedia = null
+let startX=0
+let currentX=0
+let dragging=false
 
-let media = [
+let media=[
 
-{
-type:"image",
-url:"https://thispersondoesnotexist.com/",
-answer:"ai",
-level:1
-},
+{type:"image",url:"https://picsum.photos/400?1",answer:"real",level:1},
 
-{
-type:"image",
-url:"https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
-answer:"real",
-level:1
-},
+{type:"image",url:"https://picsum.photos/400?2",answer:"ai",level:1},
 
-{
-type:"video",
-url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-answer:"real",
-level:2
-},
+{type:"video",url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",answer:"real",level:2},
 
-{
-type:"video",
-url:"https://www.w3schools.com/html/mov_bbb.mp4",
-answer:"ai",
-level:3
-}
+{type:"video",url:"https://www.w3schools.com/html/mov_bbb.mp4",answer:"ai",level:3}
 
 ]
 
 function updateLevel(){
 
-if(score > 10){
-level = 3
-}
-else if(score > 5){
-level = 2
-}
-else{
-level = 1
-}
+if(score>10){level=3}
+else if(score>5){level=2}
+else{level=1}
 
-document.getElementById("level").innerText = level
+document.getElementById("level").innerText=level
 
 }
 
 function pickMedia(){
 
-let possible = media.filter(item => item.level <= level)
+let possible=media.filter(m=>m.level<=level)
 
-currentMedia = possible[Math.floor(Math.random()*possible.length)]
+currentMedia=possible[Math.floor(Math.random()*possible.length)]
 
 renderMedia()
 
@@ -189,15 +171,22 @@ renderMedia()
 
 function renderMedia(){
 
-if(currentMedia.type === "image"){
+if(currentMedia.type==="image"){
 
-document.getElementById("media").innerHTML =
-`<img src="${currentMedia.url}?${Math.random()}">`
+let img=new Image()
+
+img.onload=()=>{
+document.getElementById("media").innerHTML=""
+document.getElementById("media").appendChild(img)
+}
+
+img.src=currentMedia.url+"&"+Math.random()
 
 }
+
 else{
 
-document.getElementById("media").innerHTML =
+document.getElementById("media").innerHTML=
 `<video autoplay muted loop playsinline>
 <source src="${currentMedia.url}" type="video/mp4">
 </video>`
@@ -208,10 +197,7 @@ document.getElementById("media").innerHTML =
 
 function guess(answer){
 
-document.getElementById("aiBtn").disabled = true
-document.getElementById("irlBtn").disabled = true
-
-if(answer === currentMedia.answer){
+if(answer===currentMedia.answer){
 
 score++
 streak++
@@ -219,23 +205,31 @@ streak++
 document.getElementById("result").innerText="✅ Correct"
 document.getElementById("tip").innerText=""
 
+updateLevel()
+
+document.getElementById("score").innerText=score
+document.getElementById("streak").innerText=streak
+
+setTimeout(()=>nextRound(),600)
+
 }
+
 else{
 
-streak = 0
+streak=0
 
 document.getElementById("result").innerText="❌ Incorrect"
 
-generateAITip()
-
-}
+generateTip()
 
 updateLevel()
 
-document.getElementById("score").innerText = score
-document.getElementById("streak").innerText = streak
+document.getElementById("score").innerText=score
+document.getElementById("streak").innerText=streak
 
-document.getElementById("nextBtn").style.display = "block"
+document.getElementById("nextBtn").style.display="block"
+
+}
 
 }
 
@@ -243,35 +237,80 @@ function nextRound(){
 
 document.getElementById("result").innerText=""
 document.getElementById("tip").innerText=""
-
 document.getElementById("nextBtn").style.display="none"
 
-document.getElementById("aiBtn").disabled = false
-document.getElementById("irlBtn").disabled = false
+document.getElementById("card").style.transform="translateX(0)"
 
 pickMedia()
 
 }
 
-function generateAITip(){
+function generateTip(){
 
-let tips = [
+let tips=[
 
-"Look closely at earrings, teeth, and hair symmetry.",
+"Look closely at symmetry in eyes or hair.",
 
-"AI images often struggle with consistent lighting.",
+"AI often struggles with lighting consistency.",
 
-"Deepfakes sometimes show unnatural blinking or lip sync.",
+"Deepfakes may show unnatural blinking.",
 
-"Check for distorted background objects."
+"Background objects can appear distorted."
 
 ]
 
-let randomTip = tips[Math.floor(Math.random()*tips.length)]
+let tip=tips[Math.floor(Math.random()*tips.length)]
 
-document.getElementById("tip").innerText="Tip: " + randomTip
+document.getElementById("tip").innerText="Tip: "+tip
 
 }
+
+/* SWIPE HANDLING */
+
+const card=document.getElementById("card")
+
+card.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+dragging=true
+})
+
+card.addEventListener("touchmove",e=>{
+
+if(!dragging) return
+
+currentX=e.touches[0].clientX-startX
+
+card.style.transform=`translateX(${currentX}px)`
+
+})
+
+card.addEventListener("touchend",()=>{
+
+dragging=false
+
+if(currentX>120){
+
+card.style.transform="translateX(600px)"
+guess("real")
+
+}
+
+else if(currentX<-120){
+
+card.style.transform="translateX(-600px)"
+guess("ai")
+
+}
+
+else{
+
+card.style.transform="translateX(0)"
+
+}
+
+currentX=0
+
+})
 
 pickMedia()
 
