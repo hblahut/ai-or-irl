@@ -71,15 +71,40 @@ color:white;
 }
 
 .next{
-background:#333;
-color:white;
+background:white;
+color:black;
 margin-top:15px;
 width:100%;
 }
 
+.overlay{
+
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+background:rgba(0,0,0,0.75);
+
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+
+color:white;
+padding:20px;
+border-radius:12px;
+
+}
+
 .tip{
 margin-top:10px;
-color:#444;
+font-size:16px;
+}
+
+.hidden{
+display:none;
 }
 
 .swipe-hint{
@@ -105,24 +130,36 @@ Level: <span id="level">1</span>
 </div>
 
 <div id="card">
+
 <div id="media">Loading...</div>
+
+<div id="overlay" class="overlay hidden">
+
+<h2 id="result"></h2>
+
+<p id="tip" class="tip"></p>
+
+<button class="next" onclick="nextRound()">Next</button>
+
+</div>
+
 </div>
 
 <div class="swipe-hint">
-← Swipe or Click →
+Swipe on mobile • Click on desktop
 </div>
 
-<div class="buttons">
-<button class="ai" onclick="guess('ai')">⬅ AI</button>
-<button class="irl" onclick="guess('real')">IRL ➡</button>
-</div>
+<div class="buttons" id="buttons">
 
-<p id="result"></p>
-<p id="tip" class="tip"></p>
-
-<button id="nextBtn" class="next" onclick="nextRound()" style="display:none">
-Next →
+<button class="ai" onclick="guess('ai')">
+⬅ AI
 </button>
+
+<button class="irl" onclick="guess('real')">
+IRL ➡
+</button>
+
+</div>
 
 </div>
 
@@ -136,6 +173,12 @@ let currentMedia=null
 let startX=0
 let currentX=0
 let dragging=false
+
+let isMobile = window.innerWidth < 768
+
+if(isMobile){
+document.getElementById("buttons").style.display="none"
+}
 
 let media=[
 
@@ -202,9 +245,6 @@ if(answer===currentMedia.answer){
 score++
 streak++
 
-document.getElementById("result").innerText="✅ Correct"
-document.getElementById("tip").innerText=""
-
 updateLevel()
 
 document.getElementById("score").innerText=score
@@ -218,16 +258,14 @@ else{
 
 streak=0
 
-document.getElementById("result").innerText="❌ Incorrect"
+document.getElementById("result").innerText="Incorrect"
 
 generateTip()
 
-updateLevel()
+document.getElementById("overlay").classList.remove("hidden")
 
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
-
-document.getElementById("nextBtn").style.display="block"
 
 }
 
@@ -235,9 +273,7 @@ document.getElementById("nextBtn").style.display="block"
 
 function nextRound(){
 
-document.getElementById("result").innerText=""
-document.getElementById("tip").innerText=""
-document.getElementById("nextBtn").style.display="none"
+document.getElementById("overlay").classList.add("hidden")
 
 document.getElementById("card").style.transform="translateX(0)"
 
@@ -255,19 +291,19 @@ let tips=[
 
 "Deepfakes may show unnatural blinking.",
 
-"Background objects can appear distorted."
+"Background objects may look warped."
 
 ]
 
 let tip=tips[Math.floor(Math.random()*tips.length)]
 
-document.getElementById("tip").innerText="Tip: "+tip
+document.getElementById("tip").innerText=tip
 
 }
 
-/* SWIPE HANDLING */
-
 const card=document.getElementById("card")
+
+if(isMobile){
 
 card.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX
@@ -276,7 +312,7 @@ dragging=true
 
 card.addEventListener("touchmove",e=>{
 
-if(!dragging) return
+if(!dragging)return
 
 currentX=e.touches[0].clientX-startX
 
@@ -311,6 +347,8 @@ card.style.transform="translateX(0)"
 currentX=0
 
 })
+
+}
 
 pickMedia()
 
