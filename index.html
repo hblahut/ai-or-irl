@@ -22,8 +22,7 @@ padding:20px;
 }
 
 #card{
-position:relative;
-transition:transform .25s ease;
+transition:transform .2s ease;
 }
 
 img{
@@ -36,7 +35,7 @@ margin-top:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-top:12px;
+margin-top:14px;
 font-size:18px;
 font-weight:bold;
 }
@@ -47,6 +46,12 @@ font-weight:bold;
 .swipe-middle{
 color:#666;
 font-size:16px;
+}
+
+#result{
+font-size:22px;
+margin-top:10px;
+height:28px;
 }
 
 .overlay{
@@ -83,11 +88,11 @@ Score: <span id="score">0</span><br>
 
 <div id="card">
 
-<div id="media"></div>
+<img id="image">
 
 <div id="overlay" class="overlay hidden">
 
-<h2 id="result"></h2>
+<h2 id="overlayResult"></h2>
 <p id="tip"></p>
 
 <button onclick="nextRound()">Next</button>
@@ -95,6 +100,8 @@ Score: <span id="score">0</span><br>
 </div>
 
 </div>
+
+<div id="result"></div>
 
 <div class="swipe-arrows">
 <div class="swipe-left">⬅ AI</div>
@@ -108,91 +115,64 @@ Score: <span id="score">0</span><br>
 
 let score=0
 let streak=0
-let currentAnswer=""
+let answer=""
 let locked=false
 
 let startX=0
-let currentX=0
-let dragging=false
 
-const card=document.getElementById("card")
-
-/* IMAGE DATA */
+const img=document.getElementById("image")
 
 const aiImages=[
-"https://thispersondoesnotexist.com/?1",
-"https://thispersondoesnotexist.com/?2",
-"https://thispersondoesnotexist.com/?3",
-"https://thispersondoesnotexist.com/?4"
+"https://thispersondoesnotexist.com/",
+"https://thispersondoesnotexist.com/?2"
 ]
 
 const realImages=[
 "https://picsum.photos/400?1",
-"https://picsum.photos/400?2",
-"https://picsum.photos/400?3",
-"https://picsum.photos/400?4"
+"https://picsum.photos/400?2"
 ]
 
 function newRound(){
 
 locked=false
-
-card.style.transform="translateX(0)"
+document.getElementById("result").innerText=""
 
 let isAI=Math.random()<0.5
 
-let url
-
 if(isAI){
-currentAnswer="ai"
-url=aiImages[Math.floor(Math.random()*aiImages.length)]
+answer="ai"
+img.src=aiImages[Math.floor(Math.random()*aiImages.length)]+"?"+Math.random()
 }else{
-currentAnswer="real"
-url=realImages[Math.floor(Math.random()*realImages.length)]
+answer="real"
+img.src=realImages[Math.floor(Math.random()*realImages.length)]+"?"+Math.random()
 }
-
-renderImage(url)
-
-}
-
-function renderImage(url){
-
-const media=document.getElementById("media")
-
-media.innerHTML=""
-
-const img=document.createElement("img")
-
-img.src=url+"?"+Math.random()
-
-media.appendChild(img)
 
 }
 
-function guess(answer){
+function guess(choice){
 
 if(locked)return
 locked=true
 
-let correct=currentAnswer
-
-if(answer===correct){
+if(choice===answer){
 
 score++
 streak++
 
+document.getElementById("result").innerText=`Correct — ${answer.toUpperCase()}!`
+
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
-setTimeout(newRound,700)
+setTimeout(newRound,800)
 
 }else{
 
 streak=0
 
-document.getElementById("result").innerText=`Incorrect — ${correct.toUpperCase()}!`
+document.getElementById("overlayResult").innerText=`Incorrect — ${answer.toUpperCase()}!`
 
-if(correct==="ai" && answer==="real"){
+if(answer==="ai" && choice==="real"){
 generateTip()
 }else{
 document.getElementById("tip").innerText=""
@@ -208,20 +188,17 @@ document.getElementById("streak").innerText=streak
 }
 
 function nextRound(){
-
 document.getElementById("overlay").classList.add("hidden")
-
 newRound()
-
 }
 
 function generateTip(){
 
 const tips=[
 "Look for strange symmetry in faces.",
-"AI often struggles with teeth and earrings.",
-"Hair strands may blend into the background.",
-"Earrings or glasses may be mismatched."
+"AI often struggles with teeth.",
+"Earrings or glasses may mismatch.",
+"Hair strands may blend into background."
 ]
 
 document.getElementById("tip").innerText=
@@ -231,39 +208,24 @@ tips[Math.floor(Math.random()*tips.length)]
 
 /* SWIPE */
 
+const card=document.getElementById("card")
+
 card.addEventListener("touchstart",e=>{
 startX=e.touches[0].clientX
-dragging=true
 })
 
-card.addEventListener("touchmove",e=>{
+card.addEventListener("touchend",e=>{
 
-if(!dragging)return
+let endX=e.changedTouches[0].clientX
+let diff=endX-startX
 
-currentX=e.touches[0].clientX-startX
-card.style.transform=`translateX(${currentX}px)`
+if(Math.abs(diff)<50)return
 
-})
-
-card.addEventListener("touchend",()=>{
-
-dragging=false
-
-if(currentX>120){
-card.style.transform="translateX(500px)"
+if(diff>0){
 guess("real")
-}
-
-else if(currentX<-120){
-card.style.transform="translateX(-500px)"
+}else{
 guess("ai")
 }
-
-else{
-card.style.transform="translateX(0)"
-}
-
-currentX=0
 
 })
 
