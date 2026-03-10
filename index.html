@@ -22,7 +22,7 @@ padding:20px;
 }
 
 #card{
-transition:transform .2s ease;
+position:relative;
 }
 
 img{
@@ -42,35 +42,57 @@ font-weight:bold;
 
 .swipe-left{color:#ff4d4d}
 .swipe-right{color:#2ecc71}
+.swipe-middle{color:#666}
 
-.swipe-middle{
-color:#666;
-font-size:16px;
-}
+.feedback{
 
-#result{
-font-size:22px;
-margin-top:10px;
-height:28px;
+position:absolute;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+
+font-size:40px;
+font-weight:bold;
+
+color:white;
+text-shadow:0 2px 10px rgba(0,0,0,.6);
+
+opacity:0;
+transition:opacity .2s;
+
 }
 
 .overlay{
+
 position:absolute;
 top:0;
 left:0;
 width:100%;
 height:100%;
+
 background:rgba(0,0,0,.85);
+
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
+
 color:white;
 border-radius:12px;
 padding:20px;
+
 }
 
 .hidden{display:none;}
+
+button{
+margin-top:20px;
+padding:14px 24px;
+border:none;
+border-radius:8px;
+font-size:16px;
+cursor:pointer;
+}
 
 </style>
 </head>
@@ -90,18 +112,17 @@ Score: <span id="score">0</span><br>
 
 <img id="image">
 
+<div id="feedback" class="feedback"></div>
+
 <div id="overlay" class="overlay hidden">
 
-<h2 id="overlayResult"></h2>
 <p id="tip"></p>
 
-<button onclick="nextRound()">Next</button>
+<button onclick="nextRound()">Continue</button>
 
 </div>
 
 </div>
-
-<div id="result"></div>
 
 <div class="swipe-arrows">
 <div class="swipe-left">⬅ AI</div>
@@ -121,21 +142,24 @@ let locked=false
 let startX=0
 
 const img=document.getElementById("image")
+const feedback=document.getElementById("feedback")
 
 const aiImages=[
 "https://thispersondoesnotexist.com/",
-"https://thispersondoesnotexist.com/?2"
+"https://thispersondoesnotexist.com/?2",
+"https://thispersondoesnotexist.com/?3"
 ]
 
 const realImages=[
 "https://picsum.photos/400?1",
-"https://picsum.photos/400?2"
+"https://picsum.photos/400?2",
+"https://picsum.photos/400?3"
 ]
 
 function newRound(){
 
 locked=false
-document.getElementById("result").innerText=""
+feedback.style.opacity=0
 
 let isAI=Math.random()<0.5
 
@@ -159,37 +183,55 @@ if(choice===answer){
 score++
 streak++
 
-document.getElementById("result").innerText=`Correct — ${answer.toUpperCase()}!`
+showFeedback("CORRECT!", "#2ecc71")
 
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
-setTimeout(newRound,800)
+setTimeout(newRound,900)
 
 }else{
 
 streak=0
 
-document.getElementById("overlayResult").innerText=`Incorrect — ${answer.toUpperCase()}!`
-
-if(answer==="ai" && choice==="real"){
-generateTip()
-}else{
-document.getElementById("tip").innerText=""
-}
-
-document.getElementById("overlay").classList.remove("hidden")
+showFeedback("INCORRECT!", "#ff4d4d")
 
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
+/* show tip ONLY if AI guessed as real */
+
+if(answer==="ai" && choice==="real"){
+
+setTimeout(()=>{
+generateTip()
+document.getElementById("overlay").classList.remove("hidden")
+},700)
+
+}else{
+
+setTimeout(newRound,900)
+
 }
+
+}
+
+}
+
+function showFeedback(text,color){
+
+feedback.innerText=text
+feedback.style.color=color
+feedback.style.opacity=1
 
 }
 
 function nextRound(){
+
 document.getElementById("overlay").classList.add("hidden")
+
 newRound()
+
 }
 
 function generateTip(){
@@ -197,8 +239,8 @@ function generateTip(){
 const tips=[
 "Look for strange symmetry in faces.",
 "AI often struggles with teeth.",
-"Earrings or glasses may mismatch.",
-"Hair strands may blend into background."
+"Earrings may be mismatched.",
+"Hair strands may merge into the background."
 ]
 
 document.getElementById("tip").innerText=
