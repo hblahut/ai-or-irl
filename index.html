@@ -24,10 +24,6 @@ margin:auto;
 padding:20px;
 }
 
-h1{
-margin-top:10px;
-}
-
 .score{
 margin-top:10px;
 font-size:18px;
@@ -36,7 +32,7 @@ font-size:18px;
 #card{
 position:relative;
 touch-action:none;
-transition:transform .3s ease, opacity .3s ease;
+transition:transform .25s ease, opacity .25s ease;
 opacity:0;
 }
 
@@ -61,54 +57,41 @@ border-radius:10px;
 cursor:pointer;
 }
 
-.ai{
-background:#ff6b6b;
-color:white;
-}
-
-.irl{
-background:#4CAF50;
-color:white;
-}
-
-.next{
-background:white;
-color:black;
-margin-top:15px;
-width:100%;
-}
+.ai{background:#ff6b6b;color:white;}
+.irl{background:#4CAF50;color:white;}
 
 .overlay{
-
 position:absolute;
 top:0;
 left:0;
 width:100%;
 height:100%;
-
-background:rgba(0,0,0,0.75);
-
+background:rgba(0,0,0,0.8);
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-
 color:white;
 padding:20px;
 border-radius:12px;
-
 }
 
-.tip{
+.hidden{display:none;}
+
+.tip{margin-top:10px}
+
+.swipe-arrows{
+display:flex;
+justify-content:space-between;
 margin-top:10px;
-font-size:16px;
+font-size:20px;
+font-weight:bold;
 }
 
-.hidden{
-display:none;
-}
+.swipe-left{color:#ff4d4d}
+.swipe-right{color:#2ecc71}
 
-.start-screen{
+.start{
 display:flex;
 flex-direction:column;
 justify-content:center;
@@ -117,7 +100,7 @@ height:100vh;
 padding:40px;
 }
 
-.start-button{
+.start button{
 margin-top:30px;
 padding:16px 24px;
 font-size:18px;
@@ -128,54 +111,24 @@ color:white;
 cursor:pointer;
 }
 
-.instructions{
-margin-top:20px;
-font-size:18px;
-line-height:1.6;
-}
-
-.swipe-indicator{
-
-position:absolute;
-top:20px;
-left:0;
-right:0;
-
-font-size:28px;
-font-weight:bold;
-
-opacity:0;
-transition:opacity .2s;
-
-}
-
-.swipe-ai{
-color:#ff4d4d;
-}
-
-.swipe-real{
-color:#2ecc71;
-}
-
 </style>
 
 </head>
 
 <body>
 
-<div id="startScreen" class="start-screen">
+<div id="startScreen" class="start">
 
 <h1>AI or IRL</h1>
 
-<div class="instructions">
-Swipe <b>LEFT</b> if you think it's AI.<br><br>
-Swipe <b>RIGHT</b> if you think it's real.
+<p>
+Swipe LEFT if you think the media is AI.<br><br>
+Swipe RIGHT if you think it is real.
+</p>
+
+<button onclick="startGame()">Start Game</button>
+
 </div>
-
-<button class="start-button" onclick="startGame()">Start Game</button>
-
-</div>
-
 
 <div id="game" class="container hidden">
 
@@ -189,9 +142,6 @@ Level: <span id="level">1</span>
 
 <div id="card">
 
-<div id="swipeAI" class="swipe-indicator swipe-ai">AI</div>
-<div id="swipeREAL" class="swipe-indicator swipe-real">REAL</div>
-
 <div id="media">Loading...</div>
 
 <div id="overlay" class="overlay hidden">
@@ -200,17 +150,20 @@ Level: <span id="level">1</span>
 
 <p id="tip" class="tip"></p>
 
-<button class="next" onclick="nextRound()">Next</button>
+<button onclick="nextRound()">Next</button>
 
 </div>
 
+</div>
+
+<div class="swipe-arrows">
+<div class="swipe-left">⬅ AI</div>
+<div class="swipe-right">REAL ➡</div>
 </div>
 
 <div class="buttons" id="buttons">
-
 <button class="ai" onclick="guess('ai')">⬅ AI</button>
 <button class="irl" onclick="guess('real')">IRL ➡</button>
-
 </div>
 
 </div>
@@ -221,6 +174,7 @@ let score=0
 let streak=0
 let level=1
 let currentMedia=null
+let locked=false
 
 let startX=0
 let currentX=0
@@ -233,12 +187,9 @@ document.getElementById("buttons").style.display="none"
 }
 
 function startGame(){
-
 document.getElementById("startScreen").style.display="none"
 document.getElementById("game").classList.remove("hidden")
-
 pickMedia()
-
 }
 
 let media=[
@@ -255,9 +206,9 @@ let media=[
 
 function updateLevel(){
 
-if(score>10){level=3}
-else if(score>5){level=2}
-else{level=1}
+if(score>10) level=3
+else if(score>5) level=2
+else level=1
 
 document.getElementById("level").innerText=level
 
@@ -266,7 +217,6 @@ document.getElementById("level").innerText=level
 function pickMedia(){
 
 let possible=media.filter(m=>m.level<=level)
-
 currentMedia=possible[Math.floor(Math.random()*possible.length)]
 
 renderMedia()
@@ -275,6 +225,9 @@ renderMedia()
 
 function renderMedia(){
 
+locked=false
+document.getElementById("card").style.opacity=1
+
 if(currentMedia.type==="image"){
 
 let img=new Image()
@@ -282,8 +235,6 @@ let img=new Image()
 img.onload=()=>{
 document.getElementById("media").innerHTML=""
 document.getElementById("media").appendChild(img)
-
-document.getElementById("card").style.opacity=1
 }
 
 img.src=currentMedia.url+"&"+Math.random()
@@ -297,25 +248,30 @@ document.getElementById("media").innerHTML=
 <source src="${currentMedia.url}" type="video/mp4">
 </video>`
 
-document.getElementById("card").style.opacity=1
-
 }
 
 }
 
 function guess(answer){
 
-if(answer===currentMedia.answer){
+if(locked) return
+locked=true
+
+let correct=currentMedia.answer
+
+if(answer===correct){
 
 score++
 streak++
+
+document.getElementById("result").innerText=`Correct – ${correct.toUpperCase()}!`
 
 updateLevel()
 
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
-setTimeout(()=>nextRound(),600)
+setTimeout(nextRound,800)
 
 }
 
@@ -323,7 +279,7 @@ else{
 
 streak=0
 
-document.getElementById("result").innerText="Incorrect"
+document.getElementById("result").innerText=`Incorrect – ${correct.toUpperCase()}!`
 
 generateTip()
 
@@ -341,7 +297,6 @@ function nextRound(){
 document.getElementById("overlay").classList.add("hidden")
 
 document.getElementById("card").style.transform="translateX(0)"
-document.getElementById("card").style.opacity=0
 
 pickMedia()
 
@@ -350,15 +305,10 @@ pickMedia()
 function generateTip(){
 
 let tips=[
-
 "Look closely at symmetry in eyes or hair.",
-
 "AI often struggles with lighting consistency.",
-
 "Deepfakes may show unnatural blinking.",
-
 "Background objects may look warped."
-
 ]
 
 let tip=tips[Math.floor(Math.random()*tips.length)]
@@ -378,24 +328,10 @@ dragging=true
 
 card.addEventListener("touchmove",e=>{
 
-if(!dragging)return
+if(!dragging) return
 
 currentX=e.touches[0].clientX-startX
-
 card.style.transform=`translateX(${currentX}px)`
-
-if(currentX>40){
-
-document.getElementById("swipeREAL").style.opacity=1
-document.getElementById("swipeAI").style.opacity=0
-
-}
-else if(currentX<-40){
-
-document.getElementById("swipeAI").style.opacity=1
-document.getElementById("swipeREAL").style.opacity=0
-
-}
 
 })
 
@@ -403,25 +339,18 @@ card.addEventListener("touchend",()=>{
 
 dragging=false
 
-document.getElementById("swipeAI").style.opacity=0
-document.getElementById("swipeREAL").style.opacity=0
-
 if(currentX>120){
-
-card.style.transform="translateX(600px)"
+card.style.transform="translateX(500px)"
 guess("real")
-
 }
+
 else if(currentX<-120){
-
-card.style.transform="translateX(-600px)"
+card.style.transform="translateX(-500px)"
 guess("ai")
-
 }
+
 else{
-
 card.style.transform="translateX(0)"
-
 }
 
 currentX=0
