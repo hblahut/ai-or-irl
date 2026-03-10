@@ -23,11 +23,10 @@ padding:20px;
 
 #card{
 position:relative;
-transition:transform .25s ease, background .25s ease;
-border-radius:12px;
+transition:transform .25s ease;
 }
 
-img{
+video,img{
 width:100%;
 border-radius:12px;
 margin-top:20px;
@@ -36,37 +35,18 @@ margin-top:20px;
 .swipe-arrows{
 display:flex;
 justify-content:space-between;
+align-items:center;
 margin-top:12px;
-font-size:22px;
+font-size:18px;
 font-weight:bold;
 }
 
 .swipe-left{color:#ff4d4d}
 .swipe-right{color:#2ecc71}
 
-.buttons{
-display:flex;
-justify-content:space-between;
-margin-top:20px;
-}
-
-button{
-width:48%;
-padding:16px;
-font-size:18px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-}
-
-.ai{background:#ff6b6b;color:white;}
-.real{background:#4CAF50;color:white;}
-
-#result{
-font-size:22px;
-font-weight:bold;
-margin-top:12px;
-height:30px;
+.swipe-middle{
+color:#666;
+font-size:16px;
 }
 
 .overlay{
@@ -103,11 +83,11 @@ Score: <span id="score">0</span><br>
 
 <div id="card">
 
-<img id="image">
+<div id="media"></div>
 
 <div id="overlay" class="overlay hidden">
 
-<h2 id="overlayResult"></h2>
+<h2 id="result"></h2>
 <p id="tip"></p>
 
 <button onclick="nextRound()">Next</button>
@@ -116,16 +96,10 @@ Score: <span id="score">0</span><br>
 
 </div>
 
-<div id="result"></div>
-
 <div class="swipe-arrows">
 <div class="swipe-left">⬅ AI</div>
+<div class="swipe-middle">Swipe to decide</div>
 <div class="swipe-right">REAL ➡</div>
-</div>
-
-<div class="buttons">
-<button class="ai" onclick="guess('ai')">⬅ AI</button>
-<button class="real" onclick="guess('real')">REAL ➡</button>
 </div>
 
 </div>
@@ -137,45 +111,69 @@ let streak=0
 let currentAnswer=""
 let locked=false
 
-const aiImages=[
-"https://thispersondoesnotexist.com/?1",
-"https://thispersondoesnotexist.com/?2",
-"https://thispersondoesnotexist.com/?3"
-]
+let startX=0
+let currentX=0
+let dragging=false
 
-const realImages=[
-"https://picsum.photos/400?1",
-"https://picsum.photos/400?2",
-"https://picsum.photos/400?3"
+const card=document.getElementById("card")
+
+/* MEDIA DATA */
+
+const media=[
+
+{type:"image",url:"https://thispersondoesnotexist.com/?1",answer:"ai"},
+{type:"image",url:"https://thispersondoesnotexist.com/?2",answer:"ai"},
+
+{type:"image",url:"https://picsum.photos/400?1",answer:"real"},
+{type:"image",url:"https://picsum.photos/400?2",answer:"real"},
+
+{type:"video",url:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",answer:"real"},
+{type:"video",url:"https://www.w3schools.com/html/mov_bbb.mp4",answer:"ai"}
+
 ]
 
 function newRound(){
 
 locked=false
 
-document.getElementById("result").innerText=""
-document.getElementById("card").style.background="transparent"
+let item=media[Math.floor(Math.random()*media.length)]
 
-let isAI=Math.random()<0.5
+currentAnswer=item.answer
 
-if(isAI){
+renderMedia(item)
 
-currentAnswer="ai"
-setImage(aiImages[Math.floor(Math.random()*aiImages.length)])
+}
+
+function renderMedia(item){
+
+let mediaDiv=document.getElementById("media")
+
+mediaDiv.innerHTML=""
+
+if(item.type==="image"){
+
+let img=document.createElement("img")
+img.src=item.url+"&"+Math.random()
+
+mediaDiv.appendChild(img)
 
 }else{
 
-currentAnswer="real"
-setImage(realImages[Math.floor(Math.random()*realImages.length)])
+let video=document.createElement("video")
+
+video.autoplay=true
+video.loop=true
+video.muted=true
+video.playsInline=true
+
+let source=document.createElement("source")
+source.src=item.url
+source.type="video/mp4"
+
+video.appendChild(source)
+mediaDiv.appendChild(video)
 
 }
-
-}
-
-function setImage(url){
-
-const img=document.getElementById("image")
-img.src=url+"&"+Math.random()
 
 }
 
@@ -184,7 +182,7 @@ function guess(answer){
 if(locked)return
 locked=true
 
-const correct=currentAnswer
+let correct=currentAnswer
 
 if(answer===correct){
 
@@ -192,19 +190,25 @@ score++
 streak++
 
 document.getElementById("result").innerText=`Correct — ${correct.toUpperCase()}!`
-document.getElementById("card").style.background="#c8f7c5"
 
 document.getElementById("score").innerText=score
 document.getElementById("streak").innerText=streak
 
-setTimeout(newRound,1200)
+setTimeout(newRound,900)
 
 }else{
 
 streak=0
 
-document.getElementById("overlayResult").innerText=`Incorrect — ${correct.toUpperCase()}!`
+document.getElementById("result").innerText=`Incorrect — ${correct.toUpperCase()}!`
+
+/* SHOW TIP ONLY IF AI WAS GUESSED AS REAL */
+
+if(correct==="ai" && answer==="real"){
 generateTip()
+}else{
+document.getElementById("tip").innerText=""
+}
 
 document.getElementById("overlay").classList.remove("hidden")
 
@@ -218,6 +222,7 @@ document.getElementById("streak").innerText=streak
 function nextRound(){
 
 document.getElementById("overlay").classList.add("hidden")
+
 newRound()
 
 }
@@ -225,8 +230,8 @@ newRound()
 function generateTip(){
 
 const tips=[
-"Look for strange symmetry in faces.",
 "AI often struggles with teeth and earrings.",
+"Look for strange symmetry in faces.",
 "Background objects may warp unnaturally.",
 "Lighting may look inconsistent."
 ]
@@ -235,6 +240,44 @@ document.getElementById("tip").innerText=
 tips[Math.floor(Math.random()*tips.length)]
 
 }
+
+/* SWIPE LOGIC */
+
+card.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+dragging=true
+})
+
+card.addEventListener("touchmove",e=>{
+
+if(!dragging)return
+
+currentX=e.touches[0].clientX-startX
+card.style.transform=`translateX(${currentX}px)`
+
+})
+
+card.addEventListener("touchend",()=>{
+
+dragging=false
+
+if(currentX>120){
+card.style.transform="translateX(500px)"
+guess("real")
+}
+
+else if(currentX<-120){
+card.style.transform="translateX(-500px)"
+guess("ai")
+}
+
+else{
+card.style.transform="translateX(0)"
+}
+
+currentX=0
+
+})
 
 newRound()
 
